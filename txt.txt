@@ -1,0 +1,172 @@
+pip install virtualenv
+#instalar entorno virtual para usar paquetes de python sin que se instalen globalmente
+
+python -m venv venv
+#entrar al entorno global
+
+pip install django
+#instalar django
+
+ django-admin startproject django_crud_api .
+ #crear la api con el nombre
+
+ python manage.py runserver
+ #para ver el localhost http://127.0.0.1:8000/
+
+python manage.py startapp tasks
+#crear una nueva app de tareas(tasks)
+
+en INSTALLED_APPS = [] dentro de settings.py agregar la app de tasks al final
+
+python manage.py migrate
+#para agregar las migraciones para crear todas las tablas para funcionar
+python manage.py runserver
+
+pip install djangorestframework
+#vamos a utilizar django rest framework (el crud funcional y facil ya creado con esta libreria)
+
+pip install django-cors-headers
+#instalar la comunicacion del front y el backend con distintos servidores
+
+#modificar INSTALLED_APPS = [] dentro de settings.py
+
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'corsheaders',
+    'rest_framework',
+    'tasks',
+]
+
+agregar al final 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+para poder conectar a django (que puerto SI puede conectarse)
+
+
+y la app Task dentro de models.py agregar la clase
+
+class Task(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    done=models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.title
+
+python manage.py makemigrations
+#agregar las migraciones de la clase que se utilizo
+
+python manage.py migrate tasks 
+#crea la tabla dentro de sqlite
+
+python manage.py createsuperuser 
+user=charly
+password=python
+
+#en admin de Task agregar 
+from django.contrib import admin
+from .models import Task
+
+# Register your models here.
+admin.site.register(Task)
+
+#crear un archivo dentro de tasks llamado serializer.py
+from rest_framework import serializers
+from .models import Task
+
+class TaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = '__all__'
+        model = Task
+
+#esto lo convierte los campos a formato JSON
+
+#en el archivo views de tasks agregar
+from rest_framework import viewsets
+from .serializers import TaskSerializer
+from .models import Task
+
+# Create your views here.
+class TaskView(viewsets.ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+
+#esto sirve para generar el crud automatico en las vistas
+
+
+#crear un nuevo archivo llamado urls.py
+from django.urls import path, include
+from rest_framework import routers
+from tasks import views
+
+router=routers.DefaultRouter()
+router.register(r'tasks',views.TaskView,'tasks')
+
+urlpatterns=[
+    path('api/v1/',include(router.urls)),
+]
+
+
+#agregar en urls pero de la carpeta principal(django_crud_api)
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('tasks/', include('tasks.urls')),  #este es el que falta
+]
+
+
+#ya con este en http://localhost:8000/tasks/api/v1/tasks/
+#tengo el crud creado sin programarlo por rest_framework
+
+
+pip install coreapi
+#instala 
+
+#en settings.py agregar el coreapi
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'corsheaders',
+    'rest_framework',
+    'coreapi',
+    'tasks',
+]
+
+#agregar en tasks urls.py la importacion rest_framework.documentation y el ultimo path
+from django.urls import path, include
+from rest_framework.documentation import include_docs_urls
+from rest_framework import routers
+from tasks import views
+
+router=routers.DefaultRouter()
+router.register(r'tasks',views.TaskView,'tasks')
+
+urlpatterns=[
+    path('api/v1/',include(router.urls)),
+    path('docs/',include_docs_urls(title="Tasks API")),
+
+]
+
+#pegar en settings.py
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+}
+
+==================================
+Frontend
+==================================
+#crear el front a misma altura que django_crud_api
+npm create vite
+ 
+
+
